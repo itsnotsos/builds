@@ -1,0 +1,67 @@
+name: LADB APK Builder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    name: Generate APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout REPO
+        uses: actions/checkout@v4
+        with:
+          repository: Burhanverse/LADB
+
+      - name: Extract repository name from checkout step
+        id: extract_repo_name
+        run: |
+          REPO_URL="Burhanverse/LADB"
+          REPO_NAME=${REPO_URL##*/}
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Setup Keystore
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
+          echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+          echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+          echo "storeFile=${{ github.workspace }}/key.jks" >> keystore.properties
+          echo "$KEYSTORE" | base64 --decode > "${{ github.workspace }}/key.jks"
+
+      - name: Build Release APK
+        run: |
+          ./gradlew assembleRelease \
+          -PKEYSTORE_FILE=${{ github.workspace }}/key.jks \
+          -PKEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} \
+          -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
+          -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }} --stacktrace
+          mv ./app/build/outputs/apk/release/app-release.apk "./${{ env.REPO_NAME }}.apk"
+    
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.REPO_NAME }}.apk
+          path: ./${{ env.REPO_NAME }}.apk
+
+      - name: Create and Release APK
+        id: upload_release_asset
+        uses: softprops/action-gh-release@v2.0.8
+        with:
+          tag_name: ${{ env.REPO_NAME }}${{ github.run_number }}
+          files: ./${{ env.REPO_NAME }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}

@@ -11,12 +11,12 @@ jobs:
       - name: Checkout REPO
         uses: actions/checkout@v4
         with:
-          repository: Burhanverse/LADB
+          repository: itsnotsos/LADB
 
       - name: Extract repository name from checkout step
         id: extract_repo_name
         run: |
-          REPO_URL="Burhanverse/LADB"
+          REPO_URL="itsnotsos/LADB"
           REPO_NAME=${REPO_URL##*/}
           echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
 

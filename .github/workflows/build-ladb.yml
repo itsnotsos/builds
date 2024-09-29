@@ -68,7 +68,7 @@ jobs:
         id: upload_release_asset
         uses: softprops/action-gh-release@v2.0.8
         with:
-          tag_name: ${REPO_NAME}-${{ env.VERSION }}
+          tag_name: ${REPO_NAME}${{ env.VERSION }}
           files: ./${{ env.REPO_NAME }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}

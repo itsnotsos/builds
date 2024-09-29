@@ -20,6 +20,13 @@ jobs:
           REPO_NAME=${REPO_URL##*/}
           echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
 
+      - name: Extract Version from build.gradle
+        id: extract_version
+        run: |
+             echo "VERSION=$(grep 'versionName' app/build.gradle | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_ENV
+             echo "VERSION=${{ env.VERSION }}" >> $GITHUB_ENV
+
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -61,7 +68,7 @@ jobs:
         id: upload_release_asset
         uses: softprops/action-gh-release@v2.0.8
         with:
-          tag_name: ${{ env.REPO_NAME }}${{ github.run_number }}
+          tag_name: ${REPO_NAME}-${{ env.VERSION }}
           files: ./${{ env.REPO_NAME }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
